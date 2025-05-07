@@ -46,7 +46,7 @@ class AddedFloorsPredictView(View):
         return JsonResponse({'message': 'Upload success!', 'type':'is_added', 'content': is_added}, status=200)
 
 class MaterialPredictView(View):
-    predictor = MaterialPredictor('./fold1_best.pth')
+    predictor = MaterialPredictor('./material.pth')
     def post(self, request):
         res = self.predictor.get_image_from_request(request)
         if isinstance(res, JsonResponse):
@@ -73,7 +73,7 @@ class ComprehensivePredictView(View):
     predictors = {
         'floors': FloorPredictor('./main_building.pt', './outer_obj.pt'),
         'add': AddedFloorPredictor('./add_predict.pth'),
-        'material': MaterialPredictor('./fold1_best.pth'),
+        'material': MaterialPredictor('./material.pth'),
         'hidden': HiddenDangerPredictor('./best.pt')
     }
     def post(self, request):
