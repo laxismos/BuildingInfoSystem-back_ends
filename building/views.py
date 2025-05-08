@@ -7,7 +7,12 @@ import json
 import uuid
 
 # Create your views here.
-
+predictors = {
+    'floors': FloorPredictor('./main_building.pt', './outer_obj.pt'),
+    'add': AddedFloorPredictor('./add_predict.pth'),
+    'material': MaterialPredictor('./material.pth'),
+    'hidden': HiddenDangerPredictor('./best.pt')
+}
 class CreateTaskView(View):
     def post(self, request):
         mac_str = bytes.fromhex(request.POST['mac'])
@@ -70,12 +75,7 @@ class HiddenDangerPredictView(View):
                             status=200)
 
 class ComprehensivePredictView(View):
-    predictors = {
-        'floors': FloorPredictor('./main_building.pt', './outer_obj.pt'),
-        'add': AddedFloorPredictor('./add_predict.pth'),
-        'material': MaterialPredictor('./material.pth'),
-        'hidden': HiddenDangerPredictor('./best.pt')
-    }
+    
     def post(self, request):
         options = json.loads(request.POST['options'])
         result = {}
@@ -86,12 +86,12 @@ class ComprehensivePredictView(View):
         if isinstance(res, JsonResponse):
             return res
         for option in options:
-            if option in self.predictors:
-                predictor = self.predictors[option]
+            if option in predictors:
+                predictor = predictors[option]
                 result[option] = predictor.predict(res)
         data = []
         for option in options:
-            if option in self.predictors:
+            if option in predictors:
                 for index, name in enumerate(names):
                     data.append({'name': name, 'result': result[option][index], 'type': option})
 

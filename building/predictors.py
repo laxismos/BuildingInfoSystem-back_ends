@@ -9,7 +9,7 @@ from .floor_recognition import *
 from torchvision import models, transforms
 import cv2
 
-BATCH_SIZE = 16
+BATCH_SIZE = 2
 
 class BasePredictor(object):
     def __init__(self):
@@ -30,7 +30,8 @@ class BasePredictor(object):
         file_names = []
         images = []
         for image_file in image_files:
-            if image_file.content_type != 'image/jpeg':
+            img_type = image_file.content_type.lower()
+            if img_type != 'image/jpeg' and img_type != 'image/png':
                 continue
             file_names.append(image_file.name)
             byte_image = image_file.read()
@@ -158,7 +159,7 @@ class MaterialPredictor(BasePredictor):
 
     def __init__(self, weights_path: PathLike | str):
         super().__init__()
-        self.type_dict = np.asarray([f'类别{x},' for x in range(1, 13)])
+        self.type_dict = np.asarray(['未知1,','未知2,','干挂石材,','砂浆,','玻璃幕墙,','未知3,','真石漆,','涂料,','铝板,','面砖,','马赛克,','未知4,'])
         self.__material_model = self.EfficientNetV2MultiLabel(12)
         self.__material_model.load_state_dict(torch.load(weights_path))
         self.__material_model.eval()
@@ -219,10 +220,14 @@ class HiddenDangerPredictor(BasePredictor):
                     current_area += area
                     defect_id = current_total
 
+                    center = points - np.mean(points, axis=0)
+                    angles = np.arctan2(center[:, 0], center[:, 1])
+
                     defects_info.append({
                         "id": defect_id,
                         "type": name,
-                        "area": area
+                        "area": area,
+                        "box": points[np.argsort(angles)].tolist()
                     })
                 str_results.append(json.dumps(defects_info))
                 total_defects += current_total
